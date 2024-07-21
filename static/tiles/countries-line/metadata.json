@@ -1,0 +1,12 @@
+{
+  "name":"boundaries",
+  "description":"",
+  "version":2,
+  "minzoom":0,
+  "maxzoom":2,
+  "center":"0.0000000,-0.7004846,0",
+  "bounds":"-180.0000000,-85.0000000,180.0000000,83.5990307",
+  "type":"overlay",
+  "format":"pbf",
+  "json":"{\n  \"vector_layers\":[\n    {\n      \"id\":\"boundaries\",\n      \"description\":\"\",\n      \"minzoom\":0,\n      \"maxzoom\":2,\n      \"fields\":{\n        \"mvt_id\":\"Number\"\n      }\n    }\n  ],\n  \"tilestats\":{\n    \"layerCount\":1,\n    \"layers\":[\n      {\n        \"layer\":\"boundaries\",\n        \"count\":300,\n        \"geometry\":\"LineString\",\n        \"attributeCount\":0,\n        \"attributes\":[]\n      }\n    ]\n  }\n}"
+}
