@@ -6,6 +6,7 @@
 	import { onDestroy, onMount } from 'svelte'
 	import type { Feature, Polygon } from 'geojson'
 	import bbox from '@turf/bbox'
+	import { base } from '$app/paths'
 
 	export let selectedCountry: Feature<Polygon, CountryProperties> | undefined
 	export let visitedCountryCodes: string[]
@@ -20,6 +21,8 @@
 		const visitedCountryBackground = '#ff6e40'
 		const selectedCountryBackground = '#ffc13b'
 		const visitedSelectedCountryBackground = '#ff9e20'
+
+		const baseUrl = window.location.origin + base
 
 		const emptyBasemap: StyleSpecification = {
 			version: 8,
@@ -47,7 +50,7 @@
 		map.on('load', () => {
 			map.addSource('countries', {
 				type: 'vector',
-				tiles: ['http://localhost:5173/tiles/countries/{z}/{x}/{y}.pbf'],
+				tiles: [`${baseUrl}/tiles/countries/{z}/{x}/{y}.pbf`],
 				maxzoom: 2,
 				promoteId: 'ADM0_A3',
 			})
@@ -76,7 +79,7 @@
 
 			map.addSource('countries-line', {
 				type: 'vector',
-				tiles: ['http://localhost:5173/tiles/countries-line/{z}/{x}/{y}.pbf'],
+				tiles: [`${baseUrl}/tiles/countries-line/{z}/{x}/{y}.pbf`],
 				maxzoom: 2,
 			})
 			map.addLayer({
@@ -92,7 +95,7 @@
 
 			map.addSource('countries-label', {
 				type: 'vector',
-				tiles: ['http://localhost:5173/tiles/countries-label/{z}/{x}/{y}.pbf'],
+				tiles: [`${baseUrl}/tiles/countries-label/{z}/{x}/{y}.pbf`],
 				maxzoom: 2,
 			})
 			map.addLayer({
