@@ -4,22 +4,25 @@
 	import 'maplibre-gl/dist/maplibre-gl.css'
 	import { onDestroy, onMount } from 'svelte'
 	import { writable } from 'svelte/store'
+	import CountrySelector from '../components/CountrySelector.svelte'
+	import bbox from '@turf/bbox'
 
 	let map: maplibregl.Map
 
 	let selectedCountryCode: string | undefined
 
-	const visitedCountries = writable<string[]>(['RUS', 'ESP'])
+	const visitedCountries = writable<string[]>([])
 
-	$: selectedCountryName = selectedCountryCode
-		? countries[selectedCountryCode].NAME_RU
+	let popupOpen = false
+
+	$: selectedCountry = selectedCountryCode
+		? countries.features.find((feature) => feature.properties.ADM0_A3 === selectedCountryCode)
 		: undefined
 
 	onMount(() => {
 		const mapBackground = '#e0e0e0' // light grey for a subtle map background
 		const countryBackground = '#f8f4e3' // very light beige for a soft country background
 		const countryNameText = '#2e2e2e' // dark slate grey for readable country names
-
 		const visitedCountryBackground = '#ffa726' // bright orange for a highly visible visited country background
 		const selectedCountryBackground = '#ff7043' // vibrant orange-red for a clearly visible selected country background
 		const visitedSelectedCountryBackground = '#ff5722' // dark orange-red for a very visible visited and selected country background
@@ -44,6 +47,7 @@
 			center: [2.35, 48.85],
 			zoom: 1, // starting zoom
 			maxZoom: 5,
+			attributionControl: false,
 		})
 
 		map.on('load', () => {
@@ -112,23 +116,31 @@
 				},
 				paint: {
 					'text-color': countryNameText,
-					'text-halo-color': '#ffffff',
+					'text-halo-color': '#ddd',
 					'text-halo-width': 1,
 				},
 				minzoom: 3,
 			})
 		})
 
+		map.on('mouseenter', 'countries-fill', () => {
+			map.getCanvas().style.cursor = 'pointer'
+		})
+
+		map.on('mouseleave', 'countries-fill', () => {
+			map.getCanvas().style.cursor = ''
+		})
+
 		map.on('click', (e) => {
 			const features = map.queryRenderedFeatures(e.point)
 			if (!features.length) {
 				selectedCountryCode = undefined
+				popupOpen = false
 				return
 			}
 			const feature = features[0]
-			console.log('Feature:', feature)
-
 			selectedCountryCode = feature.properties.ADM0_A3
+			popupOpen = true
 		})
 
 		map.on('sourcedata', (e) => {
@@ -143,16 +155,38 @@
 	})
 
 	$: {
-		console.log('Selected country:', selectedCountryCode)
-		if (map && map.loaded()) {
-			map.querySourceFeatures('countries', {
-				sourceLayer: 'countries',
-			}).forEach((feature) => {
-				map.setFeatureState(
-					{ source: 'countries', sourceLayer: 'countries', id: feature.id },
-					{ selected: feature.properties.ADM0_A3 === selectedCountryCode }
-				)
-			})
+		if (map) {
+			console.log('Selected country:', selectedCountry?.properties?.NAME_RU)
+			const updateSelected = () => {
+				map.querySourceFeatures('countries', {
+					sourceLayer: 'countries',
+				}).forEach((feature) => {
+					map.setFeatureState(
+						{ source: 'countries', sourceLayer: 'countries', id: feature.id },
+						{ selected: feature.properties.ADM0_A3 === selectedCountryCode }
+					)
+				})
+			}
+
+			updateSelected()
+
+			if (selectedCountry) {
+				const boundingBox = bbox(selectedCountry as any)
+
+				map.fitBounds(boundingBox as any, {
+					padding: {
+						top: 25,
+						left: 45,
+						right: 45,
+						bottom: 345,
+					},
+					maxDuration: 1000,
+				})
+
+				map.once('idle', () => {
+					updateSelected()
+				})
+			}
 		}
 	}
 
@@ -164,7 +198,6 @@
 	}
 
 	function updateVisitedCountries() {
-		console.log('Updating visited countries', $visitedCountries)
 		map.querySourceFeatures('countries', {
 			sourceLayer: 'countries',
 		}).forEach((feature) => {
@@ -175,33 +208,54 @@
 		})
 	}
 
-	function toggleVisitedCountry() {
+	function toggleVisitedCountry(code: string) {
 		visitedCountries.update((countries) => {
-			if (!selectedCountryCode) {
+			if (!code) {
 				return countries
 			}
-			if (countries.includes(selectedCountryCode)) {
-				return countries.filter((country) => country !== selectedCountryCode)
+			if (countries.includes(code)) {
+				return countries.filter((country) => country !== code)
 			} else {
-				return [...countries, selectedCountryCode]
+				return [...countries, code]
 			}
 		})
 	}
 </script>
 
+<div class="stats">
+	<p>{$visitedCountries.length} / {countries.features.length}</p>
+</div>
+
 <div id="map" />
-{#if selectedCountryCode}
-	<div class="selected">
-		<p>
-			{selectedCountryName}
-			<button
-				on:click={toggleVisitedCountry}
-				class:visited={$visitedCountries.includes(selectedCountryCode)}
-			>
-				Посетил
-			</button>
-		</p>
-	</div>
+
+{#if popupOpen}
+	<CountrySelector
+		visitedCountries={$visitedCountries}
+		{selectedCountryCode}
+		selectCountry={(code) => {
+			selectedCountryCode = code
+		}}
+		{toggleVisitedCountry}
+	/>
+{:else}
+	<button
+		class="add"
+		on:click={() => {
+			selectedCountry = undefined
+			popupOpen = true
+		}}
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke-width="1.5"
+			stroke="currentColor"
+			class="size-6"
+		>
+			<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+		</svg>
+	</button>
 {/if}
 
 <style>
@@ -213,28 +267,31 @@
 		left: 0;
 	}
 
-	.selected {
+	.stats {
+		position: absolute;
+		top: 0;
+		left: 0;
+		padding: 10px;
+		width: 100%;
+		text-align: center;
+		font-size: larger;
+		z-index: 1;
+	}
+
+	.add {
 		position: absolute;
 		bottom: 0;
-		left: 0;
 		right: 0;
-		background: white;
 		padding: 10px;
-		border-radius: 25px 25px 0 0;
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-	}
-
-	.selected button {
-		background: #faefeb;
-		color: black;
-		border: none;
-		border-radius: 5px;
-		padding: 5px 10px;
-		cursor: pointer;
-	}
-
-	.selected button.visited {
-		background: #ffa726;
+		aspect-ratio: 1;
+		width: 40px;
+		height: 40px;
+		line-height: 0;
+		font-size: x-large;
+		border-radius: 50%;
+		margin: 10px;
+		background-color: #ff5722;
 		color: white;
+		cursor: pointer;
 	}
 </style>
