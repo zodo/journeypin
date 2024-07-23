@@ -47,6 +47,10 @@
 			attributionControl: false,
 		})
 
+		map.dragRotate.disable()
+		map.touchZoomRotate.disableRotation()
+		map.touchPitch.disable()
+
 		map.on('load', () => {
 			map.addSource('countries', {
 				type: 'vector',

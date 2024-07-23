@@ -2,9 +2,34 @@
 	import countries from '$lib/countries'
 	import CountrySelector from '../components/CountrySelector.svelte'
 	import Map from '../components/Map.svelte'
-	import { tick } from 'svelte'
+	import { onMount, tick } from 'svelte'
 	import createCloudStore from '$lib/telegram-storage'
 	import type { StorageSchema } from '$lib/models'
+	import { initHapticFeedback, initMainButton, initMiniApp, postEvent } from '@telegram-apps/sdk'
+
+	const [miniApp] = initMiniApp()
+	const [mainButton] = initMainButton()
+	const hapticFeedback = initHapticFeedback()
+
+	onMount(() => {
+		miniApp.setBgColor('#1e3d59')
+		miniApp.setHeaderColor('#1e3d59')
+		postEvent('web_app_expand')
+
+		mainButton.setParams({
+			text: 'Countries',
+			bgColor: '#ff6e40',
+			textColor: '#1e3d59',
+		})
+		mainButton.show()
+		mainButton.on('click', () => {
+			hapticFeedback.impactOccurred('light')
+			selectedCountryCode = undefined
+			popupOpen = !popupOpen
+		})
+
+		miniApp.ready()
+	})
 
 	const storage = createCloudStore<StorageSchema>({
 		countries: [],
@@ -18,7 +43,12 @@
 		? countries.features.find((feature) => feature.properties.ADM0_A3 === selectedCountryCode)
 		: undefined
 
+	$: selectedCountryCode, hapticFeedback.selectionChanged()
+
 	const toggleVisitedCountry = (code: string) => {
+		setTimeout(() => {
+			hapticFeedback.impactOccurred('medium')
+		}, 100)
 		storage.update((storage) => {
 			if (!code) {
 				return storage
@@ -70,25 +100,6 @@
 			popupOpen = false
 		}}
 	/>
-{:else}
-	<button
-		class="add"
-		on:click={() => {
-			selectedCountry = undefined
-			popupOpen = true
-		}}
-	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke-width="1.5"
-			stroke="currentColor"
-			class="size-6"
-		>
-			<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
-		</svg>
-	</button>
 {/if}
 
 <style>
@@ -103,21 +114,5 @@
 		z-index: 1;
 		color: #f5f0e1;
 		text-shadow: 0 0 5px #1e3d59;
-	}
-
-	.add {
-		position: absolute;
-		bottom: 0;
-		right: 0;
-		padding: 10px;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		margin: 10px;
-		background-color: #ff6e40;
-		color: #1e3d59;
-		cursor: pointer;
-		outline: none;
-		border: none;
 	}
 </style>
