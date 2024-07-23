@@ -68,7 +68,7 @@
 		color: #1e3d59;
 		border: none;
 		border-radius: 0.5em;
-		padding: 0.1em 0.5em;
+		padding: 0.3em 0.5em;
 		cursor: pointer;
 		display: inline-flex;
 		align-items: center;
@@ -94,6 +94,6 @@
 		cursor: pointer;
 		width: 100%;
 		text-align: left;
-		font-size: 0.9rem;
+		font-size: 1em;
 	}
 </style>

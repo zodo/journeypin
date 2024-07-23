@@ -2,6 +2,7 @@
 	import countries from '$lib/countries'
 	import { tick } from 'svelte'
 	import CountryListElement from './CountryListElement.svelte'
+	import { slide } from 'svelte/transition'
 
 	export let selectCountry: (code: string) => void
 	export let toggleVisitedCountry: (code: string) => void
@@ -32,7 +33,7 @@
 		.sort((a, b) => a.NAME_RU.localeCompare(b.NAME_RU))
 </script>
 
-<div class="popup">
+<div class="popup" transition:slide={{ duration: 250 }}>
 	<div class="header">
 		<input type="text" bind:value={searchText} placeholder="Search..." />
 		<button class="close" on:click={closeClicked}>
@@ -93,8 +94,7 @@
 <style>
 	.scrollable {
 		overflow-y: auto;
-		height: 25vh;
-		overflow-y: auto;
+		height: 40vh;
 	}
 
 	h3 {
@@ -103,7 +103,8 @@
 
 	p {
 		color: #666;
-		font-size: 0.9em;
+		margin-left: 0.8em;
+		display: block;
 	}
 
 	input {
@@ -112,6 +113,7 @@
 		padding: 0.5em;
 		border: none;
 		border-bottom: 1px solid #ccc;
+		font-size: 1em;
 	}
 
 	.popup {
@@ -121,7 +123,7 @@
 		right: 0;
 		background: white;
 		padding: 10px;
-		border-radius: 25px 25px 0 0;
+		border-radius: 20px 20px 0 0;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 	}
 

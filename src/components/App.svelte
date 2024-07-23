@@ -21,14 +21,20 @@
 			bgColor: '#ff6e40',
 			textColor: '#1e3d59',
 		})
-		mainButton.show()
-		mainButton.on('click', () => {
+		const clickListener = () => {
 			hapticFeedback.impactOccurred('light')
 			selectedCountryCode = undefined
 			popupOpen = !popupOpen
-		})
+		}
+		mainButton.enable()
+		mainButton.on('click', clickListener)
+		mainButton.show()
 
 		miniApp.ready()
+
+		return () => {
+			mainButton.off('click', clickListener)
+		}
 	})
 
 	const storage = createCloudStore<StorageSchema>({
@@ -80,29 +86,51 @@
 	}
 </script>
 
-<div class="stats">
-	<p>{$storage.countries.length} / {countries.features.length}</p>
+<div class="wrap">
+	<div class="content">
+		<div class="stats">
+			<p>{$storage.countries.length} / {countries.features.length}</p>
+		</div>
+
+		<Map
+			visitedCountryCodes={$storage.countries}
+			{selectedCountry}
+			onMapClicked={handleMapClicked}
+		/>
+
+		{#if popupOpen}
+			<CountrySelector
+				visitedCountries={$storage.countries}
+				{selectedCountryCode}
+				selectCountry={(code) => {
+					selectedCountryCode = code
+				}}
+				{toggleVisitedCountry}
+				bind:scrollIntoView={scrollToCountry}
+				closeClicked={() => {
+					selectedCountryCode = undefined
+					popupOpen = false
+				}}
+			/>
+		{/if}
+	</div>
 </div>
 
-<Map visitedCountryCodes={$storage.countries} {selectedCountry} onMapClicked={handleMapClicked} />
-
-{#if popupOpen}
-	<CountrySelector
-		visitedCountries={$storage.countries}
-		{selectedCountryCode}
-		selectCountry={(code) => {
-			selectedCountryCode = code
-		}}
-		{toggleVisitedCountry}
-		bind:scrollIntoView={scrollToCountry}
-		closeClicked={() => {
-			selectedCountryCode = undefined
-			popupOpen = false
-		}}
-	/>
-{/if}
-
 <style>
+	.wrap {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
+	.content {
+		height: calc(100% + 1px);
+	}
+
 	.stats {
 		position: absolute;
 		top: 0;
