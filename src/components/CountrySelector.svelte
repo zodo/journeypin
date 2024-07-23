@@ -12,7 +12,6 @@
 	export const scrollIntoView = (code: string) => {
 		tick().then(() => {
 			const el = document.getElementsByClassName(`country-${code}`)
-			console.log(el)
 			if (el.length > 0) {
 				el[0].scrollIntoView({ block: 'center', behavior: 'smooth' })
 			}

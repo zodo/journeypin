@@ -36,7 +36,7 @@
 					},
 				},
 			],
-			glyphs: 'http://fonts.openmaptiles.org/{fontstack}/{range}.pbf', // TODO add to repo
+			glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf', // TODO add to repo
 		}
 		map = new maplibregl.Map({
 			container: 'map', // container id
