@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CountryProperties } from '$lib/countries'
+	import { i18nNameExtractor } from '$lib/i18n'
 
 	export let country: CountryProperties
 	export let selectClicked: () => void
@@ -48,7 +49,7 @@
 	</button>
 
 	<button on:click={selectClicked} class="country">
-		{country.NAME_RU}
+		{$i18nNameExtractor(country)}
 	</button>
 </li>
 

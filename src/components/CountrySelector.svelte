@@ -3,6 +3,7 @@
 	import { tick } from 'svelte'
 	import CountryListElement from './CountryListElement.svelte'
 	import { slide } from 'svelte/transition'
+	import { i18n, i18nNameExtractor } from '$lib/i18n'
 
 	export let selectCountry: (code: string) => void
 	export let toggleVisitedCountry: (code: string) => void
@@ -24,18 +25,19 @@
 	$: filteredCountries = countries.features
 		.filter(
 			(feature) =>
-				feature.properties.NAME_RU.toLowerCase().includes(searchText.toLowerCase()) ||
+				$i18nNameExtractor(feature.properties)
+					.toLowerCase()
+					.includes(searchText.toLowerCase()) ||
 				feature.properties.NAME_EN.toLowerCase().includes(searchText.toLowerCase()) ||
 				selectedCountryCode === feature.properties.ADM0_A3
 		)
 		.map((feature) => feature.properties)
-		// show selected first, then visited, then sort by name
-		.sort((a, b) => a.NAME_RU.localeCompare(b.NAME_RU))
+		.sort((a, b) => $i18nNameExtractor(a).localeCompare($i18nNameExtractor(b)))
 </script>
 
-<div class="popup" transition:slide={{ duration: 250 }}>
+<div class="popup" out:slide={{ duration: 250 }}>
 	<div class="header">
-		<input type="text" bind:value={searchText} placeholder="Search..." />
+		<input type="text" bind:value={searchText} placeholder={$i18n.search} />
 		<button class="close" on:click={closeClicked}>
 			<svg
 				class="w-6 h-6 text-gray-800 dark:text-white"
@@ -58,7 +60,7 @@
 	</div>
 
 	<div class="scrollable">
-		<h3>Visited</h3>
+		<h3>{$i18n.visited}</h3>
 
 		{#if visitedCountries.length > 0}
 			<ul>
@@ -73,10 +75,10 @@
 				{/each}
 			</ul>
 		{:else}
-			<p>No visited countries</p>
+			<p>{$i18n.noVisited}</p>
 		{/if}
 
-		<h3>All</h3>
+		<h3>{$i18n.all}</h3>
 		<ul>
 			{#each filteredCountries as country}
 				<CountryListElement

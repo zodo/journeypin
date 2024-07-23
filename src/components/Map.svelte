@@ -7,6 +7,7 @@
 	import type { Feature, Polygon } from 'geojson'
 	import bbox from '@turf/bbox'
 	import { base } from '$app/paths'
+	import { i18nCountryKeyName } from '$lib/i18n'
 
 	export let selectedCountry: Feature<Polygon, CountryProperties> | undefined
 	export let visitedCountryCodes: string[]
@@ -108,7 +109,7 @@
 				source: 'countries-label',
 				'source-layer': 'countrieslabelsonsurface',
 				layout: {
-					'text-field': ['get', 'NAME_RU'],
+					'text-field': ['coalesce', ['get', $i18nCountryKeyName], ['get', 'NAME_EN']],
 					'text-font': ['Klokantech Noto Sans Regular'],
 					'text-justify': 'auto',
 					'text-size': 12,

@@ -104,6 +104,7 @@ export interface CountryProperties {
 	FCLASS_ISO: string
 	TLC_DIFF: string | null
 	FCLASS_TLC: string
+	ADM0_TLC: string
 }
 
 const countries: FeatureCollection<Polygon, CountryProperties> = {

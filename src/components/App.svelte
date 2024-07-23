@@ -5,19 +5,32 @@
 	import { onMount, tick } from 'svelte'
 	import createCloudStore from '$lib/telegram-storage'
 	import type { StorageSchema } from '$lib/models'
-	import { initHapticFeedback, initMainButton, initMiniApp, postEvent } from '@telegram-apps/sdk'
+	import {
+		initHapticFeedback,
+		initInitData,
+		initMainButton,
+		initMiniApp,
+		postEvent,
+	} from '@telegram-apps/sdk'
+	import { i18n, setLanguage, supportedLanguages } from '$lib/i18n'
 
 	const [miniApp] = initMiniApp()
 	const [mainButton] = initMainButton()
 	const hapticFeedback = initHapticFeedback()
+	const initData = initInitData()
 
 	onMount(() => {
+		const userLanguage = initData?.user?.languageCode?.toUpperCase()
+		if (userLanguage) {
+			setLanguage(userLanguage)
+		}
+
 		miniApp.setBgColor('#1e3d59')
 		miniApp.setHeaderColor('#1e3d59')
 		postEvent('web_app_expand')
 
 		mainButton.setParams({
-			text: 'Countries',
+			text: $i18n.countries,
 			bgColor: '#ff6e40',
 			textColor: '#1e3d59',
 		})
