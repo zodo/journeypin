@@ -1,10 +1,23 @@
 <script lang="ts">
 	import countries from '$lib/countries'
+	import { tick } from 'svelte'
+	import CountryListElement from './CountryListElement.svelte'
 
 	export let selectCountry: (code: string) => void
 	export let toggleVisitedCountry: (code: string) => void
 	export let visitedCountries: string[]
 	export let selectedCountryCode: string | undefined
+	export let closeClicked: () => void
+
+	export const scrollIntoView = (code: string) => {
+		tick().then(() => {
+			const el = document.getElementsByClassName(`country-${code}`)
+			console.log(el)
+			if (el.length > 0) {
+				el[0].scrollIntoView({ block: 'center', behavior: 'smooth' })
+			}
+		})
+	}
 
 	let searchText = ''
 
@@ -17,64 +30,81 @@
 		)
 		.map((feature) => feature.properties)
 		// show selected first, then visited, then sort by name
-		.sort((a, b) => {
-			if (a.ADM0_A3 === selectedCountryCode) return -1
-			if (b.ADM0_A3 === selectedCountryCode) return 1
-			if (visitedCountries.includes(a.ADM0_A3) && !visitedCountries.includes(b.ADM0_A3))
-				return -1
-			if (visitedCountries.includes(b.ADM0_A3) && !visitedCountries.includes(a.ADM0_A3))
-				return 1
-			return a.NAME_RU.localeCompare(b.NAME_RU)
-		})
+		.sort((a, b) => a.NAME_RU.localeCompare(b.NAME_RU))
 </script>
 
 <div class="popup">
-	<input type="text" bind:value={searchText} placeholder="Search..." />
-
-	<ul>
-		{#each filteredCountries as country}
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<li
-				on:click={() => selectCountry(country.ADM0_A3)}
-				class:selected={country.ADM0_A3 === selectedCountryCode}
+	<div class="header">
+		<input type="text" bind:value={searchText} placeholder="Search..." />
+		<button class="close" on:click={closeClicked}>
+			<svg
+				class="w-6 h-6 text-gray-800 dark:text-white"
+				aria-hidden="true"
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				fill="none"
+				viewBox="0 0 24 24"
 			>
-				{country.NAME_RU}
-				<button
-					on:click={() => toggleVisitedCountry(country.ADM0_A3)}
-					class="visit"
-					class:visited={visitedCountries.includes(country.ADM0_A3)}
-				>
-					{#if visitedCountries.includes(country.ADM0_A3)}
-						✓
-					{:else}
-						+
-					{/if}
-				</button>
-			</li>
-		{/each}
-	</ul>
+				<path
+					stroke="currentColor"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M6 18 17.94 6M18 18 6.06 6"
+				/>
+			</svg>
+		</button>
+	</div>
+
+	<div class="scrollable">
+		<h3>Visited</h3>
+
+		{#if visitedCountries.length > 0}
+			<ul>
+				{#each filteredCountries.filter( (country) => visitedCountries.includes(country.ADM0_A3) ) as country}
+					<CountryListElement
+						{country}
+						selectClicked={() => selectCountry(country.ADM0_A3)}
+						visitClicked={() => toggleVisitedCountry(country.ADM0_A3)}
+						selected={selectedCountryCode === country.ADM0_A3}
+						visited={true}
+					/>
+				{/each}
+			</ul>
+		{:else}
+			<p>No visited countries</p>
+		{/if}
+
+		<h3>All</h3>
+		<ul>
+			{#each filteredCountries as country}
+				<CountryListElement
+					{country}
+					selectClicked={() => selectCountry(country.ADM0_A3)}
+					visitClicked={() => toggleVisitedCountry(country.ADM0_A3)}
+					selected={selectedCountryCode === country.ADM0_A3}
+					visited={visitedCountries.includes(country.ADM0_A3)}
+				/>
+			{/each}
+		</ul>
+	</div>
 </div>
 
 <style>
-	ul {
+	.scrollable {
 		overflow-y: auto;
 		height: 25vh;
 		overflow-y: auto;
 	}
 
-	li {
-		padding: 0.5em;
-		cursor: pointer;
-	}
-
-	li.selected {
-		background: #f9f9f9;
+	h3 {
+		margin: 0.5em 0;
 	}
 
 	p {
-		margin: 0;
-		text-align: center;
+		color: #666;
+		font-size: 0.9em;
 	}
 
 	input {
@@ -83,20 +113,6 @@
 		padding: 0.5em;
 		border: none;
 		border-bottom: 1px solid #ccc;
-	}
-
-	.visit {
-		background: #faefeb;
-		color: #666;
-		border: none;
-		border-radius: 5px;
-		padding: 5px 10px;
-		cursor: pointer;
-	}
-
-	.visit.visited {
-		background: #ffa726;
-		color: white;
 	}
 
 	.popup {
@@ -108,5 +124,19 @@
 		padding: 10px;
 		border-radius: 25px 25px 0 0;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	}
+
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1em;
+	}
+
+	.close {
+		background: none;
+		border: none;
+		cursor: pointer;
+		margin-right: 0.5em;
 	}
 </style>
